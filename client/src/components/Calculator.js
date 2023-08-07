@@ -1,16 +1,19 @@
 import React, { useState } from "react";
 import "../App.css";
 
-import hist_icon from "../Icons/clock.png";
+import hist_icon from "../Icons/history.png";
 
 const Calculator = () => {
   const [expression, setExpression] = useState("");
-  const [res, setRes] = useState(false);
+
+  const [answer, setAnswer] = useState("");
+
+  const [visible, setVisible] = useState(false);
 
   const [history, setHistory] = useState([]);
 
   const handleClick = (e) => {
-    if (res) {
+    if (answer.length !== 0) {
       alert("Please clear the input and try again");
       return;
     }
@@ -62,19 +65,15 @@ const Calculator = () => {
     setExpression(variable_expression);
   };
 
-  const handleOnChange = (e) => {
-    setExpression(e.target.value);
-  };
-
   const handleClear = (e) => {
-    setRes(false);
+    setAnswer("");
     setExpression("");
   };
 
   const handleBackSpace = (e) => {
     if (expression.length === 0) return;
     let nextexp;
-    if(expression[expression.length - 1] === " ")
+    if (expression[expression.length - 1] === " ")
       nextexp = expression.slice(0, expression.length - 3);
     else nextexp = expression.slice(0, expression.length - 1);
     setExpression(nextexp);
@@ -127,7 +126,7 @@ const Calculator = () => {
     while (operatorStack.length > 0) {
       outputQueue.push(operatorStack.pop());
     }
-    console.log(...outputQueue);
+    
     return outputQueue;
   }
 
@@ -165,184 +164,197 @@ const Calculator = () => {
     return stack.pop();
   }
 
+  const handleHistory=(idx)=>{
+    setVisible(!visible);
+    setExpression(history[idx].answer);
+    setAnswer(history[idx].expression)
+  }
+
   const handleCompute = (e) => {
-    if (expression.length === 0 || res) return;
+    if (expression.length === 0 || answer.length !== 0) return;
     const postfixExpression = infixToPostfix(expression);
     const result = evaluatePostfix(postfixExpression);
 
-    setRes(true);
+    setAnswer(expression + " =");
     setExpression(result + " ");
+    setHistory([...history,{"expression":expression,"answer":result}]);
   };
 
   return (
-    <div className="  custom-container bg-light">
-      <div className="d-flex column">
-        
-        <textarea
-          id="textarea"
-          type="number"
-          onChange={(e) => {
-            handleOnChange(e);
-          }}
-          className="form-control position-relative text-left p-1"
-          rows="2"
-          value={expression}
-        >
-        
-          {expression}
-        </textarea>
-        {/* <div className="position-absolute">
-        <img className="img  bg-transparent p-1" src={hist_icon} alt="" />
-        <span>hi</span>
-        </div> */}
-      </div>
-
-      <div className="row  mt-2">
-        <div className="form-group text-center">
-          <button
-            onClick={(e) => handleClick(e)}
-            className="col  btn btn-custom"
-          >
-            (
-          </button>
-          <button
-            onClick={(e) => handleClick(e)}
-            className="col btn btn-custom"
-          >
-            )
-          </button>
-          <button
-            onClick={(e) => handleClick(e)}
-            className="col btn btn-custom"
-          >
-            %
-          </button>
-          <button
-            onClick={(e) =>
-              expression.length !== 0 && !res
-                ? handleBackSpace(e)
-                : handleClear(e)
-            }
-            className="col btn btn-danger  btn-custom"
-          >
-            {expression.length !== 0 && !res ? "CE" : "AC"}
-          </button>
-        </div>
-      </div>
-
-      <div className="row">
-        <div className="form-group  text-center">
-          <button
-            onClick={(e) => handleClick(e)}
-            className="col  btn btn-custom"
-          >
-            1
-          </button>
-          <button
-            onClick={(e) => handleClick(e)}
-            className="col btn btn-custom"
-          >
-            2
-          </button>
-          <button
-            onClick={(e) => handleClick(e)}
-            className="col btn btn-custom"
-          >
-            3
-          </button>
-          <button
-            onClick={(e) => handleClick(e)}
-            className="col btn btn-custom"
-          >
-            ÷
-          </button>
-        </div>
-      </div>
-
-      <div className="row">
-        <div className="form-group text-center">
-          <button
-            onClick={(e) => handleClick(e)}
-            className="col btn btn-custom"
-          >
-            3
-          </button>
-          <button
-            onClick={(e) => handleClick(e)}
-            className="col btn btn-custom"
-          >
-            4
-          </button>
-          <button
-            onClick={(e) => handleClick(e)}
-            className="col btn btn-custom"
-          >
-            5
-          </button>
-          <button
-            onClick={(e) => handleClick(e)}
-            className="col btn btn-custom"
-          >
+    <div className="custom-container bg-light">
+      {visible ? (
+        <div className="hist">
+          <div className="btn btn-danger position-fixed " onClick={() => setVisible(!visible)}>
             ×
-          </button>
+          </div>
+          <ul className="pl-4 mt-4 hist_list pe-auto">
+            {history.map((elem, idx) => {
+              return <li key={idx} className="form-control overflow-x-hidden " onClick={()=>handleHistory(idx)} style={{fontSize:"15px",cursor:"pointer"}}>
+                <strong >{elem.expression} = {elem.answer}</strong> </li>
+            })}
+          </ul>
         </div>
-      </div>
-
-      <div className="row">
-        <div className="form-group text-center">
-          <button
-            onClick={(e) => handleClick(e)}
-            className="col btn btn-custom"
-          >
-            7
-          </button>
-          <button
-            onClick={(e) => handleClick(e)}
-            className="col btn btn-custom"
-          >
-            8
-          </button>
-          <button
-            onClick={(e) => handleClick(e)}
-            className="col btn btn-custom"
-          >
-            9
-          </button>
-          <button
-            onClick={(e) => handleClick(e)}
-            className="col btn btn-custom"
-          >
-            -
-          </button>
+      ) : null}
+      <div className="form-control">
+        <div className="d-flex justify-content-between">
+          <img
+            className="img"
+            src={hist_icon}
+            onClick={() => setVisible(!visible)}
+            alt=""
+          />
+          <div className="answer">{answer}</div>
         </div>
+        <div id="inputArea">{expression}</div>
       </div>
+      <div className="keypad">
+        <div className="row  mt-2">
+          <div className="form-group text-center">
+            <button
+              onClick={(e) => handleClick(e)}
+              className="col  btn btn-custom"
+            >
+              (
+            </button>
+            <button
+              onClick={(e) => handleClick(e)}
+              className="col btn btn-custom"
+            >
+              )
+            </button>
+            <button
+              onClick={(e) => handleClick(e)}
+              className="col btn btn-custom"
+            >
+              %
+            </button>
+            <button
+              onClick={(e) =>
+                expression.length !== 0 && answer.length === 0
+                  ? handleBackSpace(e)
+                  : handleClear(e)
+              }
+              className="col btn btn-danger  btn-custom"
+            >
+              {expression.length !== 0 && answer.length === 0 ? "CE" : "AC"}
+            </button>
+          </div>
+        </div>
 
-      <div className="row">
-        <div className="form-group text-center">
-          <button
-            onClick={(e) => handleClick(e)}
-            className="col btn btn-custom"
-          >
-            0
-          </button>
-          <button
-            onClick={(e) => handleClick(e)}
-            className="col btn btn-custom"
-          >
-            .
-          </button>
-          <button
-            onClick={(e) => handleCompute(e)}
-            className="col btn btn-success btn-custom"
-          >
-            =
-          </button>
-          <button
-            onClick={(e) => handleClick(e)}
-            className="col btn btn-custom"
-          >
-            +
-          </button>
+        <div className="row">
+          <div className="form-group  text-center">
+            <button
+              onClick={(e) => handleClick(e)}
+              className="col  btn btn-custom"
+            >
+              1
+            </button>
+            <button
+              onClick={(e) => handleClick(e)}
+              className="col btn btn-custom"
+            >
+              2
+            </button>
+            <button
+              onClick={(e) => handleClick(e)}
+              className="col btn btn-custom"
+            >
+              3
+            </button>
+            <button
+              onClick={(e) => handleClick(e)}
+              className="col btn btn-custom"
+            >
+              ÷
+            </button>
+          </div>
+        </div>
+
+        <div className="row">
+          <div className="form-group text-center">
+            <button
+              onClick={(e) => handleClick(e)}
+              className="col btn btn-custom"
+            >
+              3
+            </button>
+            <button
+              onClick={(e) => handleClick(e)}
+              className="col btn btn-custom"
+            >
+              4
+            </button>
+            <button
+              onClick={(e) => handleClick(e)}
+              className="col btn btn-custom"
+            >
+              5
+            </button>
+            <button
+              onClick={(e) => handleClick(e)}
+              className="col btn btn-custom"
+            >
+              ×
+            </button>
+          </div>
+        </div>
+
+        <div className="row">
+          <div className="form-group text-center">
+            <button
+              onClick={(e) => handleClick(e)}
+              className="col btn btn-custom"
+            >
+              7
+            </button>
+            <button
+              onClick={(e) => handleClick(e)}
+              className="col btn btn-custom"
+            >
+              8
+            </button>
+            <button
+              onClick={(e) => handleClick(e)}
+              className="col btn btn-custom"
+            >
+              9
+            </button>
+            <button
+              onClick={(e) => handleClick(e)}
+              className="col btn btn-custom"
+            >
+              -
+            </button>
+          </div>
+        </div>
+
+        <div className="row">
+          <div className="form-group text-center">
+            <button
+              onClick={(e) => handleClick(e)}
+              className="col btn btn-custom"
+            >
+              0
+            </button>
+            <button
+              onClick={(e) => handleClick(e)}
+              className="col btn btn-custom"
+            >
+              .
+            </button>
+            <button
+              onClick={(e) => handleCompute(e)}
+              className="col btn btn-success btn-custom"
+            >
+              =
+            </button>
+            <button
+              onClick={(e) => handleClick(e)}
+              className="col btn btn-custom"
+            >
+              +
+            </button>
+          </div>
         </div>
       </div>
     </div>
